@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3 uid="uid://ps54qla22c0t"]
+
+[ext_resource type="PackedScene" uid="uid://ca8frta6anhcx" path="res://PaperGrid.tscn" id="1_8wuuv"]
+[ext_resource type="Script" uid="uid://ctacvhyyrji2i" path="res://PaperGrid.cs" id="2_tha2q"]
+
+[node name="Node2D" type="Node2D"]
+
+[node name="ScrollContainer" parent="." instance=ExtResource("1_8wuuv")]
+offset_left = 12.0
+offset_top = 8.00003
+offset_right = 288.0
+offset_bottom = 204.0
+scale = Vector2(8.915, 8.915)
+script = ExtResource("2_tha2q")

@@ -1,0 +1,35 @@
+[gd_scene load_steps=2 format=3 uid="uid://ca8frta6anhcx"]
+
+[ext_resource type="PackedScene" uid="uid://c2i4k8yp3vd8h" path="res://btn_PaperGrid.tscn" id="1_kclqk"]
+
+[node name="ScrollContainer" type="ScrollContainer"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_right = 160.245
+offset_bottom = 102.12
+grow_horizontal = 2
+horizontal_scroll_mode = 0
+
+[node name="HFlowContainer" type="HFlowContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Button" parent="HFlowContainer" instance=ExtResource("1_kclqk")]
+layout_mode = 2
+
+[node name="Button2" parent="HFlowContainer" instance=ExtResource("1_kclqk")]
+layout_mode = 2
+
+[node name="Button3" parent="HFlowContainer" instance=ExtResource("1_kclqk")]
+layout_mode = 2
+
+[node name="Button4" parent="HFlowContainer" instance=ExtResource("1_kclqk")]
+layout_mode = 2
+
+[node name="Button5" parent="HFlowContainer" instance=ExtResource("1_kclqk")]
+layout_mode = 2
+
+[node name="Button6" parent="HFlowContainer" instance=ExtResource("1_kclqk")]
+layout_mode = 2

@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://c2i4k8yp3vd8h"]
+
+[ext_resource type="Texture2D" uid="uid://m2aea3prxcqk" path="res://icon.svg" id="1_dnkli"]
+[ext_resource type="Script" uid="uid://ci7ko0dgvjw7" path="res://PaperButton.cs" id="2_fggxr"]
+
+[node name="Button" type="Button"]
+offset_right = 827.0
+offset_bottom = 1169.0
+size_flags_stretch_ratio = 1.41
+text = "Test"
+icon = ExtResource("1_dnkli")
+icon_alignment = 1
+vertical_icon_alignment = 0
+expand_icon = true
+script = ExtResource("2_fggxr")
