@@ -1,15 +1,33 @@
 [gd_scene load_steps=3 format=3 uid="uid://c2i4k8yp3vd8h"]
 
-[ext_resource type="Texture2D" uid="uid://m2aea3prxcqk" path="res://icon.svg" id="1_dnkli"]
-[ext_resource type="Script" uid="uid://ci7ko0dgvjw7" path="res://PaperButton.cs" id="2_fggxr"]
+[ext_resource type="Script" uid="uid://deqb6mxswhoif" path="res://View/PaperButton.cs" id="1_ahlix"]
+[ext_resource type="Texture2D" uid="uid://c6f6bd83s6oq2" path="res://Test-PDF png/Test-PDF-6.png" id="1_fggxr"]
 
-[node name="Button" type="Button"]
-offset_right = 827.0
-offset_bottom = 1169.0
+[node name="MarginContainer" type="MarginContainer"]
+offset_left = 23.4414
+offset_right = 95.5586
+offset_bottom = 116.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_ahlix")
+
+[node name="AspectRatioContainer" type="AspectRatioContainer" parent="."]
+layout_mode = 2
+ratio = 0.6217
+alignment_vertical = 0
+
+[node name="ColorRect" type="ColorRect" parent="AspectRatioContainer"]
+layout_mode = 2
+color = Color(0.154876, 0.154876, 0.154876, 1)
+
+[node name="Button" type="Button" parent="AspectRatioContainer"]
+layout_mode = 2
 size_flags_stretch_ratio = 1.41
-text = "Test"
-icon = ExtResource("1_dnkli")
+text = "1"
+icon = ExtResource("1_fggxr")
+flat = true
 icon_alignment = 1
 vertical_icon_alignment = 0
 expand_icon = true
-script = ExtResource("2_fggxr")
+
+[connection signal="pressed" from="AspectRatioContainer/Button" to="AspectRatioContainer/ColorRect" method="_on_button_pressed"]

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c6ix2apagilnt"]
+
+[ext_resource type="Script" uid="uid://baic3fqneeska" path="res://Editor/EditorConfigTool.cs" id="1_a7hbt"]
+
+[node name="ConfigToolRoot" type="Node"]
+script = ExtResource("1_a7hbt")
