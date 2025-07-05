@@ -1,7 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://ca8frta6anhcx"]
+[gd_scene load_steps=2 format=3 uid="uid://ca8frta6anhcx"]
 
 [ext_resource type="Script" uid="uid://ca0x4dvtml4md" path="res://View/PaperGrid.cs" id="1_fug5v"]
-[ext_resource type="PackedScene" uid="uid://c2i4k8yp3vd8h" path="res://btn_PaperGrid.tscn" id="2_fug5v"]
 
 [node name="ScrollContainer" type="ScrollContainer"]
 anchors_preset = -1
@@ -19,6 +18,3 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 columns = 4
 script = ExtResource("1_fug5v")
-
-[node name="Button" parent="GridContainer" instance=ExtResource("2_fug5v")]
-layout_mode = 2

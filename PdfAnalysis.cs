@@ -13,7 +13,6 @@ namespace PaperPilot
         /// Analyzes a Godot ImageTexture to determine if the page is blank (mostly white).
         /// </summary>
         /// <param name="texture">The ImageTexture of the PDF page (should be RGBA8).</param>
-        /// <param name="threshold">Fraction of non-white pixels required to be considered 'not blank' (e.g. 0.01 = 1%)</param>
         /// <returns>True if the page is blank, otherwise false.</returns>
         public static bool AnalyzeForBlank(ImageTexture texture)
         {

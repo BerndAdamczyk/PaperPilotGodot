@@ -38,8 +38,12 @@ placeholder_text = "Output File Name"
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="Node" type="Node" parent="."]
+[node name="EditorConfigTool" type="Node" parent="."]
 script = ExtResource("3_6bryr")
 InputFolder = "res://input"
 OutputFolder = "res://output"
-SaveConfig = true
+BlankPageThreshold = 0.01
+NotAnalyzedColor = Color(0.427493, 0.427493, 0.427493, 1)
+KeepColor = Color(4.87324e-07, 0.342791, 4.33177e-07, 1)
+EmptyColor = Color(0.455403, 1.07693e-06, 2.16588e-07, 1)
+SplittingPointColor = Color(0.295882, 0.016956, 0.460966, 1)

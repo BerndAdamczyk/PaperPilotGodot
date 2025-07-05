@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using PaperPilot.Config;
+using PaperPilot.View;
 
 namespace PaperPilot.Controller
 {
@@ -26,6 +27,8 @@ namespace PaperPilot.Controller
             ConfigManager.LoadAll();
             
             ProcessNextPDF();
+
+            this.GetComponentsInChildren<PaperGrid>().First().Setup(this, _paperStack);
         }
         private void ProcessNextPDF()
         {

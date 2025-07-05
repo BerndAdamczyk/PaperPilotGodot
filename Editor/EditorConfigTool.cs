@@ -12,6 +12,9 @@ public partial class EditorConfigTool : Node
     [Export(PropertyHint.Dir)]
     public string OutputFolder { get; set; } = "output";
 
+    [Export]
+    public double BlankPageThreshold { get; set; } = 0.1;
+
     // Example: Color exports for 4 paper states
     [Export]
     public Color NotAnalyzedColor { get; set; } = Colors.Gray;
@@ -31,8 +34,9 @@ public partial class EditorConfigTool : Node
         {
             // Set config values
             ConfigManager.PilotConfig ??= new PaperPilotConfig();
-            ConfigManager.PilotConfig.InputFolderPath = InputFolder;
-            ConfigManager.PilotConfig.OutputFolderPath = OutputFolder;
+            ConfigManager.PilotConfig.InputFolderPath = ProjectSettings.GlobalizePath(InputFolder);
+            ConfigManager.PilotConfig.OutputFolderPath = ProjectSettings.GlobalizePath(OutputFolder);
+            ConfigManager.PilotConfig.BlankPageThreshold = BlankPageThreshold;
 
             // Set colors
             ConfigManager.StateColorConfig ??= new PaperStateColorConfig();
@@ -45,8 +49,8 @@ public partial class EditorConfigTool : Node
             ConfigManager.SaveAll();
 
             GD.Print("[ConfigEditorTool] Default config saved to user://");
-            // Optionally: open the config folder
-            // ConfigManager.ShowConfigFolder();
+             //Optionally: open the config folder
+            ConfigManager.ShowConfigFolder();
         }
     }
 }
