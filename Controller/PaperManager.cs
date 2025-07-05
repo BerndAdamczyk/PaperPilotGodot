@@ -15,6 +15,7 @@ namespace PaperPilot.Controller
 {
     public partial class PaperManager : Node
     {
+        public Action<Paper> PageProcessed;
         private int _paperPreviewWidth { get; set; } = 800;
         private int _paperPreviewHeight => (int)(_paperPreviewWidth * 1.414f);
 
@@ -23,14 +24,11 @@ namespace PaperPilot.Controller
         public override void _Ready()
         {
             base._Ready();
-
             ConfigManager.LoadAll();
-            
+            this.GetComponentsInChildren<PaperGrid>().First().Setup(this);
             ProcessNextPDF();
-
-            this.GetComponentsInChildren<PaperGrid>().First().Setup(this, _paperStack);
         }
-        private void ProcessNextPDF()
+        private async void ProcessNextPDF()
         {
             try
             {
@@ -51,6 +49,10 @@ namespace PaperPilot.Controller
                                 : PaperState.Keep;
                         }
                         _paperStack.Papers.Add(paper);
+                        PageProcessed?.Invoke(paper);
+
+                        // Yield to Godot so UI can update/events can process
+                        await ToSignal(GetTree(), "process_frame");
                     }
                 }
 

@@ -13,31 +13,40 @@ namespace PaperPilot.View
     {
         private PaperManager _paperManager = null;
 
-        private PaperStack _paperStack = null;
         private PaperStateColorConfig _colorConfig = null;
+
+        private PackedScene _paperButtonScene = null;
 
         private List<PaperButton> _buttons = new List<PaperButton>();
 
-        public void Setup(PaperManager paperManager, PaperStack paperStack)
+        public void Setup(PaperManager paperManager)
         {
             _paperManager = paperManager;
-            _paperStack = paperStack;
             _colorConfig = ConfigManager.StateColorConfig;
+            _paperButtonScene = GD.Load<PackedScene>("res://btn_PaperGrid.tscn");
 
-            var paperButtonScene = GD.Load<PackedScene>("res://btn_PaperGrid.tscn");
+            _paperManager.PageProcessed += SetupNextPage;
+        }
+
+        public void SetupNextPage(Paper paper)
+        {
             Node paperButtonInstance = null;
 
-            for (int i = 0; i < _paperStack.Papers.Count; i++)
-            {
-                paperButtonInstance = paperButtonScene.Instantiate();
-                PaperButton paperButton = paperButtonInstance
-                    .GetComponentsInChildren<PaperButton>().First();
-                paperButton.Setup(paperManager, paperStack.Papers[i]);
+            paperButtonInstance = _paperButtonScene.Instantiate();
+            PaperButton paperButton = paperButtonInstance
+                .GetComponentsInChildren<PaperButton>().First();
+            paperButton.Setup(_paperManager, paper);
 
-                AddChild(paperButtonInstance);
+            AddChild(paperButtonInstance);
 
-                _buttons.Add(paperButton);
-            }
+            _buttons.Add(paperButton);
+        }
+
+        public override void _ExitTree()
+        {
+            base._ExitTree();
+
+            _paperManager.PageProcessed -= SetupNextPage;
         }
     }
 }
