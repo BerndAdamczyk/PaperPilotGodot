@@ -19,6 +19,20 @@ namespace PaperPilot
 
             return result;
         }
+        public static List<T> GetComponentsInChildren<T>(this Node node, string name) where T : Node
+        {
+            var result = new List<T>();
+
+            // Check self
+            if (node is T tNode && node.Name == name)
+                result.Add(tNode);
+
+            // Check children recursively
+            foreach (Node child in node.GetChildren())
+                result.AddRange(child.GetComponentsInChildren<T>(name));
+
+            return result;
+        }
     }
 
 }

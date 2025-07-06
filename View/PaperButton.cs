@@ -16,8 +16,9 @@ namespace PaperPilot.View
         private Paper _paper = null;
         private PaperStateColorConfig _colorConfig;
 
-        private Button _button = null;
-        private ColorRect _colorRect = null;
+        private TextureRect _textureRect = null;
+        private Label _label = null;
+        private Panel _panel = null;
 
         public void Setup(PaperManager paperManager, Paper paper)
         {
@@ -28,12 +29,22 @@ namespace PaperPilot.View
             string absolutePath =
                 ProjectSettings.GlobalizePath("res://Test-PDF.pdf");
 
-            _button = this.GetComponentsInChildren<Button>().First();
-            _button.Icon = _paper.PagePreview;
-            _button.Text = _paper.PageId.ToString();
+            _textureRect = this.GetComponentsInChildren<TextureRect>().First();
+            _textureRect.Texture = _paper.PagePreview;
 
-            _colorRect = this.GetComponentsInChildren<ColorRect>().First();
-            _colorRect.Color = _colorConfig.StateColors[paper.State];
+
+            _label = this.GetComponentsInChildren<Label>().First();
+            _label.Text = _paper.PageId.ToString();
+
+            _panel = this.GetComponentsInChildren<Panel>().First();
+            SetPanelColor(_panel, _colorConfig.StateColors[paper.State]);
+        }
+
+        public void SetPanelColor(Panel panel, Color color)
+        {
+            var style = new StyleBoxFlat();
+            style.BgColor = color;
+            panel.AddThemeStyleboxOverride("panel", style);
         }
     }
 }

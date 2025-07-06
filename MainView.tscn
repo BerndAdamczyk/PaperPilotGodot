@@ -1,8 +1,15 @@
-[gd_scene load_steps=4 format=3 uid="uid://ps54qla22c0t"]
+[gd_scene load_steps=7 format=3 uid="uid://ps54qla22c0t"]
 
 [ext_resource type="PackedScene" uid="uid://ca8frta6anhcx" path="res://PaperGrid.tscn" id="1_8wuuv"]
+[ext_resource type="Theme" uid="uid://kgap1cf2dup7" path="res://theme.tres" id="1_axkxw"]
 [ext_resource type="Script" uid="uid://bmbygt3r7fhoh" path="res://Controller/PaperManager.cs" id="1_tha2q"]
 [ext_resource type="Script" uid="uid://baic3fqneeska" path="res://Editor/EditorConfigTool.cs" id="3_6bryr"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6d7y0"]
+bg_color = Color(0.36357, 0.146297, 4.81308e-08, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dsjxm"]
+bg_color = Color(1.50409e-07, 0.364729, 3.85046e-07, 1)
 
 [node name="Root" type="Control"]
 layout_mode = 3
@@ -11,6 +18,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("1_axkxw")
 
 [node name="PaperManager" type="Control" parent="."]
 layout_mode = 1
@@ -26,17 +34,59 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_right = 28.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="LineEdit" type="LineEdit" parent="PaperManager/VBoxContainer"]
+[node name="TopToolbar" type="PanelContainer" parent="PaperManager/VBoxContainer"]
 layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PaperManager/VBoxContainer/TopToolbar"]
+layout_mode = 2
+
+[node name="LineEdit" type="LineEdit" parent="PaperManager/VBoxContainer/TopToolbar/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
 placeholder_text = "Output File Name"
+
+[node name="Label" type="Label" parent="PaperManager/VBoxContainer/TopToolbar/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.08
+text = "Columns"
+
+[node name="SpinBox_Columns" type="SpinBox" parent="PaperManager/VBoxContainer/TopToolbar/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.08
+min_value = 1.0
+max_value = 10.0
+value = 4.0
+rounded = true
+alignment = 1
 
 [node name="ScrollContainer" parent="PaperManager/VBoxContainer" instance=ExtResource("1_8wuuv")]
 layout_mode = 2
 size_flags_vertical = 3
+
+[node name="BottomToolbar" type="PanelContainer" parent="PaperManager/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.08
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PaperManager/VBoxContainer/BottomToolbar"]
+layout_mode = 2
+
+[node name="Skip" type="Button" parent="PaperManager/VBoxContainer/BottomToolbar/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("StyleBoxFlat_6d7y0")
+text = "Skip"
+
+[node name="Confirm" type="Button" parent="PaperManager/VBoxContainer/BottomToolbar/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("StyleBoxFlat_dsjxm")
+text = "Confirm"
 
 [node name="EditorConfigTool" type="Node" parent="."]
 script = ExtResource("3_6bryr")

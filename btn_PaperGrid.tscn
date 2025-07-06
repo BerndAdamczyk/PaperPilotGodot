@@ -1,33 +1,42 @@
-[gd_scene load_steps=3 format=3 uid="uid://c2i4k8yp3vd8h"]
+[gd_scene load_steps=4 format=3 uid="uid://c2i4k8yp3vd8h"]
 
 [ext_resource type="Script" uid="uid://deqb6mxswhoif" path="res://View/PaperButton.cs" id="1_ahlix"]
 [ext_resource type="Texture2D" uid="uid://c6f6bd83s6oq2" path="res://Test-PDF png/Test-PDF-6.png" id="1_fggxr"]
+[ext_resource type="Theme" uid="uid://kgap1cf2dup7" path="res://theme.tres" id="1_ri6rt"]
 
-[node name="MarginContainer" type="MarginContainer"]
-offset_left = 23.4414
-offset_right = 95.5586
-offset_bottom = 116.0
+[node name="PanelContainer" type="PanelContainer"]
 size_flags_horizontal = 3
 size_flags_vertical = 3
+theme = ExtResource("1_ri6rt")
 script = ExtResource("1_ahlix")
 
-[node name="AspectRatioContainer" type="AspectRatioContainer" parent="."]
+[node name="Panel" type="Panel" parent="."]
 layout_mode = 2
-ratio = 0.6217
-alignment_vertical = 0
+theme = ExtResource("1_ri6rt")
 
-[node name="ColorRect" type="ColorRect" parent="AspectRatioContainer"]
+[node name="Label" type="Label" parent="Panel"]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -5.0
+grow_horizontal = 2
+grow_vertical = 0
+theme = ExtResource("1_ri6rt")
+text = "1awda wdawd awd awd "
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 2
-color = Color(0.154876, 0.154876, 0.154876, 1)
+theme = ExtResource("1_ri6rt")
 
-[node name="Button" type="Button" parent="AspectRatioContainer"]
+[node name="TextureRect" type="TextureRect" parent="MarginContainer"]
 layout_mode = 2
-size_flags_stretch_ratio = 1.41
-text = "1"
-icon = ExtResource("1_fggxr")
-flat = true
-icon_alignment = 1
-vertical_icon_alignment = 0
-expand_icon = true
-
-[connection signal="pressed" from="AspectRatioContainer/Button" to="AspectRatioContainer/ColorRect" method="_on_button_pressed"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource("1_ri6rt")
+texture = ExtResource("1_fggxr")
+expand_mode = 5
+stretch_mode = 5

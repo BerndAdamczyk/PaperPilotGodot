@@ -16,18 +16,51 @@ namespace PaperPilot.Controller
     public partial class PaperManager : Node
     {
         public Action<Paper> PageProcessed;
+        public Action<int> GridContainerColumnsChanged;
         private int _paperPreviewWidth { get; set; } = 800;
         private int _paperPreviewHeight => (int)(_paperPreviewWidth * 1.414f);
 
         private PaperStack _paperStack = new();
+        private PaperGrid _paperGrid = null;
+        private GridContainer _GC_paperGrid = null;
+        private SpinBox _spinBox_Columns = null;
+        private Button _btn_Skip = null;
+        private Button _btn_Confirm = null;
 
         public override void _Ready()
         {
             base._Ready();
             ConfigManager.LoadAll();
-            this.GetComponentsInChildren<PaperGrid>().First().Setup(this);
+
+            _paperGrid = this.GetComponentsInChildren<PaperGrid>().First();
+            _paperGrid.Setup(this);
+
+            _spinBox_Columns = this.GetComponentsInChildren<SpinBox>("SpinBox_Columns").First();
+            _btn_Skip = this.GetComponentsInChildren<Button>("Skip").First();
+            _btn_Confirm = this.GetComponentsInChildren<Button>("Confirm").First();
+
+            _spinBox_Columns.ValueChanged += _spinBox_Columns_ValueChanged;
+            _btn_Skip.Pressed += _btn_Skip_Pressed;
+            _btn_Confirm.Pressed += _btn_Confirm_Pressed;
+
             ProcessNextPDF();
         }
+
+        private void _btn_Confirm_Pressed()
+        {
+            throw new NotImplementedException();
+        }
+
+        private void _btn_Skip_Pressed()
+        {
+            throw new NotImplementedException();
+        }
+
+        private void _spinBox_Columns_ValueChanged(double value)
+        {
+            GridContainerColumnsChanged?.Invoke(Mathf.RoundToInt(value));
+        }
+
         private async void ProcessNextPDF()
         {
             try

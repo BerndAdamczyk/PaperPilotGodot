@@ -15,6 +15,5 @@ horizontal_scroll_mode = 0
 [node name="GridContainer" type="GridContainer" parent="."]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
 columns = 4
 script = ExtResource("1_fug5v")
