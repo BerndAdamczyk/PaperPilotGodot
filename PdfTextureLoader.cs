@@ -1,3 +1,5 @@
+#nullable enable
+
 using Godot;
 using System.Diagnostics;
 using System.IO;
@@ -11,8 +13,7 @@ using Docnet.Core.Readers;
 
 public static class PdfTextureLoader
 {
-    // Passe diesen Pfad ggf. an oder mache ihn per Konfiguration/Export sichtbar!
-    private static readonly string PdftoppmPath = @"C:\Programmierung\Godot_Projekte\paperpilot\bin\poppler-24.08.0\Library\bin\pdftoppm.exe";
+    
 
     /// <summary>
     /// Rendert eine PDF-Seite als PNG mit Poppler und gibt eine Godot-ImageTexture zurück.

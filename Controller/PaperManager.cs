@@ -15,22 +15,30 @@ namespace PaperPilot.Controller
 {
     public partial class PaperManager : Node
     {
-        public Action<Paper> PageProcessed;
-        public Action<int> GridContainerColumnsChanged;
+        public Action<Paper> PageProcessed { get; set; } //PDF Rendering
+        public Action<int> GridContainerColumnsChanged { get; set; }
         private int _paperPreviewWidth { get; set; } = 800;
         private int _paperPreviewHeight => (int)(_paperPreviewWidth * 1.414f);
 
+        private PaperStateColorConfig _colorConfig;
+
+        //UI Elements
         private PaperStack _paperStack = new();
         private PaperGrid _paperGrid = null;
         private GridContainer _GC_paperGrid = null;
         private SpinBox _spinBox_Columns = null;
         private Button _btn_Skip = null;
         private Button _btn_Confirm = null;
+        private Label _lbl_StEmpty = null;
+        private Label _lbl_StSplitt = null;
+        private Label _lbl_StKeep = null;
+        private Label _lbl_StTotal = null;
 
         public override void _Ready()
         {
             base._Ready();
             ConfigManager.LoadAll();
+            _colorConfig = ConfigManager.StateColorConfig;
 
             _paperGrid = this.GetComponentsInChildren<PaperGrid>().First();
             _paperGrid.Setup(this);
@@ -38,6 +46,16 @@ namespace PaperPilot.Controller
             _spinBox_Columns = this.GetComponentsInChildren<SpinBox>("SpinBox_Columns").First();
             _btn_Skip = this.GetComponentsInChildren<Button>("Skip").First();
             _btn_Confirm = this.GetComponentsInChildren<Button>("Confirm").First();
+            _lbl_StEmpty = this.GetComponentsInChildren<Label>("Empty").First();
+            _lbl_StEmpty.LabelSettings = new();
+            _lbl_StEmpty.LabelSettings.FontColor = _colorConfig.StateColors[PaperState.Empty];
+            _lbl_StSplitt = this.GetComponentsInChildren<Label>("Splitt").First();
+            _lbl_StSplitt.LabelSettings = new();
+            _lbl_StSplitt.LabelSettings.FontColor = _colorConfig.StateColors[PaperState.SplittingPoint];
+            _lbl_StKeep = this.GetComponentsInChildren<Label>("Keep").First();
+            _lbl_StKeep.LabelSettings = new();
+            _lbl_StKeep.LabelSettings.FontColor = _colorConfig.StateColors[PaperState.Keep];
+            _lbl_StTotal = this.GetComponentsInChildren<Label>("Total").First();
 
             _spinBox_Columns.ValueChanged += _spinBox_Columns_ValueChanged;
             _btn_Skip.Pressed += _btn_Skip_Pressed;
@@ -46,14 +64,16 @@ namespace PaperPilot.Controller
             ProcessNextPDF();
         }
 
-        private void _btn_Confirm_Pressed()
+        private async void _btn_Confirm_Pressed()
         {
-            throw new NotImplementedException();
+            ExportPDF();
+            await ProcessNextPDF();
         }
 
-        private void _btn_Skip_Pressed()
+
+        private async void _btn_Skip_Pressed()
         {
-            throw new NotImplementedException();
+            await ProcessNextPDF();
         }
 
         private void _spinBox_Columns_ValueChanged(double value)
@@ -61,13 +81,14 @@ namespace PaperPilot.Controller
             GridContainerColumnsChanged?.Invoke(Mathf.RoundToInt(value));
         }
 
-        private async void ProcessNextPDF()
+        private async Task ProcessNextPDF()
         {
             try
             {
-                _paperStack.Papers = new List<Paper>();
+                _paperStack = new();
+                _paperStack.Path = GetOldestPDF();
                 using (var docReader = DocLib.Instance
-                    .GetDocReader(GetOldestPDF(), new PageDimensions(_paperPreviewWidth, _paperPreviewHeight)))
+                    .GetDocReader(_paperStack.Path, new PageDimensions(_paperPreviewWidth, _paperPreviewHeight)))
                 {
                     for (int i = 0; i < docReader.GetPageCount(); i++)
                     {
@@ -82,6 +103,7 @@ namespace PaperPilot.Controller
                                 : PaperState.Keep;
                         }
                         _paperStack.Papers.Add(paper);
+                        UpdatePaperStackCounts();
                         PageProcessed?.Invoke(paper);
 
                         // Yield to Godot so UI can update/events can process
@@ -123,6 +145,21 @@ namespace PaperPilot.Controller
                 return null;
             }
         }
+        private void ExportPDF()
+        {
+            PdfStitcher.StitchDaStack(_paperStack);
+        }
 
+        private void UpdatePaperStackCounts()
+        {
+            _paperStack.KeptPages = _paperStack.Papers.Count(p => p.State == PaperState.Keep);
+            _paperStack.EmptyPages = _paperStack.Papers.Count(p => p.State == PaperState.Empty);
+            _paperStack.SplittingPointPages = _paperStack.Papers.Count(p => p.State == PaperState.SplittingPoint);
+
+            _lbl_StKeep.Text = _paperStack.KeptPages.ToString();
+            _lbl_StEmpty.Text = _paperStack.EmptyPages.ToString();
+            _lbl_StSplitt.Text = _paperStack.SplittingPointPages.ToString();
+            _lbl_StTotal.Text = _paperStack.TotalPages.ToString();
+        }
     }
 }
