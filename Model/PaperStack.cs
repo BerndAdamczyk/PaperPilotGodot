@@ -11,6 +11,7 @@ namespace PaperPilot.Model
     public class PaperStack
     {
         public string Path = string.Empty;
+        public string Name = string.Empty;
         public List<Paper> Papers { get; set; } = new();
 
         public int TotalPages => Papers.Count;

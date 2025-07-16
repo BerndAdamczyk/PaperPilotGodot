@@ -4,11 +4,16 @@ using System;
 using System.Collections.Generic;
 using Godot;
 using PaperPilot.Controller;
+using ZXing;
+using ZXing.Common;
+
 
 namespace PaperPilot
 {
     public static class PdfAnalysis
     {
+        public const string SPLIT_MARKER = "PAPER_PILOT_SPLIT";
+
         /// <summary>
         /// Analyzes a Godot ImageTexture to determine if the page is blank (mostly white).
         /// </summary>
@@ -40,7 +45,43 @@ namespace PaperPilot
             double fraction = (double)nonWhite / total;
             return fraction < ConfigManager.PilotConfig.BlankPageThreshold;
         }
+
+        public static bool AnalyzeForSplit(ImageTexture texture)
+        {
+            if (texture == null || texture.GetImage() == null)
+                return false;
+
+            var image = texture.GetImage();
+
+            // Manual Grayscale for better QR code detection
+            for (int y = 0; y < image.GetHeight(); y++)
+            {
+                for (int x = 0; x < image.GetWidth(); x++)
+                {
+                    Color original = image.GetPixel(x, y);
+                    float gray = original.R * 0.299f + original.G * 0.587f + original.B * 0.114f;
+                    image.SetPixel(x, y, new Color(gray, gray, gray, original.A));
+                }
+            }
+
+            var data = image.GetData();
+            var width = image.GetWidth();
+            var height = image.GetHeight();
+
+            var reader = new BarcodeReaderGeneric
+            {
+                AutoRotate = true,
+                Options = new DecodingOptions
+                {
+                    PossibleFormats = new List<BarcodeFormat> { BarcodeFormat.QR_CODE },
+                    TryHarder = true
+                }
+            };
+
+            var result = reader.Decode(new RGBLuminanceSource(data, width, height, RGBLuminanceSource.BitmapFormat.RGBA32));
+
+            return result != null && result.Text == SPLIT_MARKER;
+        }
     }
-
-
 }
+

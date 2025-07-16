@@ -27,14 +27,16 @@ namespace PaperPilot.Controller
         private PaperGrid _paperGrid = null;
         private GridContainer _GC_paperGrid = null;
         private SpinBox _spinBox_Columns = null;
+        private LineEdit _le_OutputFileName = null;
         private Button _btn_Skip = null;
         private Button _btn_Confirm = null;
+        private Button _btn_GenerateQr = null;
         private Label _lbl_StEmpty = null;
         private Label _lbl_StSplitt = null;
         private Label _lbl_StKeep = null;
         private Label _lbl_StTotal = null;
 
-        public override void _Ready()
+        public override async void _Ready()
         {
             base._Ready();
             ConfigManager.LoadAll();
@@ -44,8 +46,10 @@ namespace PaperPilot.Controller
             _paperGrid.Setup(this);
 
             _spinBox_Columns = this.GetComponentsInChildren<SpinBox>("SpinBox_Columns").First();
+            _le_OutputFileName = this.GetComponentsInChildren<LineEdit>("OutputFileName").First();
             _btn_Skip = this.GetComponentsInChildren<Button>("Skip").First();
             _btn_Confirm = this.GetComponentsInChildren<Button>("Confirm").First();
+            _btn_GenerateQr = this.GetComponentsInChildren<Button>("GenerateQr").First();
             _lbl_StEmpty = this.GetComponentsInChildren<Label>("Empty").First();
             _lbl_StEmpty.LabelSettings = new();
             _lbl_StEmpty.LabelSettings.FontColor = _colorConfig.StateColors[PaperState.Empty];
@@ -60,8 +64,9 @@ namespace PaperPilot.Controller
             _spinBox_Columns.ValueChanged += _spinBox_Columns_ValueChanged;
             _btn_Skip.Pressed += _btn_Skip_Pressed;
             _btn_Confirm.Pressed += _btn_Confirm_Pressed;
+            _btn_GenerateQr.Pressed += _btn_GenerateQr_Pressed;
 
-            ProcessNextPDF();
+            await ProcessNextPDF();
         }
 
         private async void _btn_Confirm_Pressed()
@@ -74,6 +79,24 @@ namespace PaperPilot.Controller
         private async void _btn_Skip_Pressed()
         {
             await ProcessNextPDF();
+        }
+
+        private void _btn_GenerateQr_Pressed()
+        {
+            var dialog = new FileDialog
+            {
+                Access = FileDialog.AccessEnum.Filesystem,
+                FileMode = FileDialog.FileModeEnum.SaveFile,
+                Title = "Save QR Code PDF",
+                CurrentFile = "PaperPilot_Split_Marker.pdf"
+            };
+            dialog.FileSelected += (path) =>
+            {
+                Tools.QrCodeGenerator.GenerateSplitMarkerPdf(path);
+                GD.Print($"QR Code PDF generated successfully at: {path}");
+            };
+            AddChild(dialog);
+            dialog.PopupCentered();
         }
 
         private void _spinBox_Columns_ValueChanged(double value)
@@ -98,9 +121,12 @@ namespace PaperPilot.Controller
                             paper.PageId = i;
                             paper.PagePreview = PdfTextureLoader.RenderPdfPage(pageReader, i, 
                                 _paperPreviewWidth, _paperPreviewHeight);
-                            paper.State = PdfAnalysis.AnalyzeForBlank(paper.PagePreview)
-                                ? PaperState.Empty
-                                : PaperState.Keep;
+                            if (PdfAnalysis.AnalyzeForSplit(paper.PagePreview))
+                                paper.State = PaperState.SplittingPoint;
+                            else
+                                paper.State = PdfAnalysis.AnalyzeForBlank(paper.PagePreview)
+                                    ? PaperState.Empty
+                                    : PaperState.Keep;
                         }
                         _paperStack.Papers.Add(paper);
                         UpdatePaperStackCounts();
@@ -147,7 +173,8 @@ namespace PaperPilot.Controller
         }
         private void ExportPDF()
         {
-            PdfStitcher.StitchDaStack(_paperStack);
+            _paperStack.Name = _le_OutputFileName.Text;
+            PdfStitcher.CleanAndSplitPdf(_paperStack);
         }
 
         private void UpdatePaperStackCounts()

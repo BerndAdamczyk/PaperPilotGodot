@@ -11,14 +11,9 @@ namespace PaperPilot
 {
     public static class PdfStitcher
     {
-        /// <summary>
-        /// Creates a new PDF file containing only the pages that are not marked as 'Empty' in the paperStack.
-        /// The new file will be saved in the configured output folder.
-        /// </summary>
-        /// <param name="paperStack">The PaperStack object containing the list of pages and their states.</param>
-        public static void StitchDaStack(PaperStack paperStack)
+        public static void CleanAndSplitPdf(PaperStack paperStack)
         {
-            // 1. Get pages to keep (everything that is not 'Empty')
+            // 1. Clean the PDF by removing empty pages
             var pagesToKeep = paperStack.Papers
                 .Where(p => p.State != PaperState.Empty)
                 .Select(p => p.PageId + 1) // DocLib uses 1-based page numbers
@@ -31,61 +26,51 @@ namespace PaperPilot
                 return;
             }
 
-            // 2. Generate page range string for DocLib (e.g., "1,3-5,7")
-            var ranges = new List<string>();
-            int rangeStart = pagesToKeep[0];
-            int rangeEnd = pagesToKeep[0];
+            string pageRange = string.Join(",", pagesToKeep);
+            byte[] cleanedPdfBytes = DocLib.Instance.Split(paperStack.Path, pageRange);
 
-            for (int i = 1; i < pagesToKeep.Count; i++)
-            {
-                if (pagesToKeep[i] == rangeEnd + 1)
-                {
-                    rangeEnd = pagesToKeep[i];
-                }
-                else
-                {
-                    if (rangeStart == rangeEnd)
-                        ranges.Add(rangeStart.ToString());
-                    else
-                        ranges.Add($"{rangeStart}-{rangeEnd}");
-                    
-                    rangeStart = pagesToKeep[i];
-                    rangeEnd = pagesToKeep[i];
-                }
-            }
-            if (rangeStart == rangeEnd)
-                ranges.Add(rangeStart.ToString());
-            else
-                ranges.Add($"{rangeStart}-{rangeEnd}");
+            // 2. Find splitting points in the cleaned PDF
+            var splittingPoints = paperStack.Papers
+                .Where(p => p.State == PaperState.SplittingPoint)
+                .Select(p => p.PageId + 1)
+                .OrderBy(p => p)
+                .ToList();
 
-            string pageRange = string.Join(",", ranges);
-            GD.Print($"Keeping pages: {pageRange}");
-
-            // 3. Define output path
+            // 3. Create output directory
             string outputFolder = ConfigManager.PilotConfig.OutputFolderPath;
-            if (!Directory.Exists(outputFolder))
-            {
-                Directory.CreateDirectory(outputFolder);
-            }
-            
             string originalFileName = Path.GetFileNameWithoutExtension(paperStack.Path);
-            string outputFileName = $"{originalFileName}_stitched.pdf";
-            string outputPath = Path.Combine(outputFolder, outputFileName);
+            string outputDirName = $"{originalFileName}_{paperStack.Name}";
+            string outputDirPath = Path.Combine(outputFolder, outputDirName);
+            Directory.CreateDirectory(outputDirPath);
 
-            // 4. Split the PDF using DocLib
-            try
+            // 4. Split the cleaned PDF
+            int startPage = 1;
+            for (int i = 0; i < splittingPoints.Count; i++)
             {
-                byte[] newPdfBytes = DocLib.Instance.Split(paperStack.Path, pageRange);
+                int endPage = splittingPoints[i];
+                string splitRange = $"{startPage}-{endPage}";
+                byte[] splitPdfBytes = DocLib.Instance.Split(cleanedPdfBytes, splitRange);
 
-                // 5. Save the new PDF
-                File.WriteAllBytes(outputPath, newPdfBytes);
+                string outputFileName = $"{originalFileName}_{paperStack.Name}_{i + 1:D3}.pdf";
+                string outputPath = Path.Combine(outputDirPath, outputFileName);
+                File.WriteAllBytes(outputPath, splitPdfBytes);
 
-                GD.PrintRich($"[color=green]Successfully stitched PDF.[/color] Saved to: [url={outputPath}]{outputPath}[/url]");
+                startPage = endPage + 1;
             }
-            catch (Exception ex)
+
+            // 5. Save the last part of the PDF
+            if (startPage <= pagesToKeep.Count)
             {
-                GD.PrintErr($"Error while stitching PDF '{paperStack.Path}': {ex.Message}");
+                string splitRange = $"{startPage}-{pagesToKeep.Count}";
+                byte[] splitPdfBytes = DocLib.Instance.Split(cleanedPdfBytes, splitRange);
+
+                string outputFileName = $"{originalFileName}_{paperStack.Name}_{splittingPoints.Count + 1:D3}.pdf";
+                string outputPath = Path.Combine(outputDirPath, outputFileName);
+                File.WriteAllBytes(outputPath, splitPdfBytes);
             }
+
+            GD.PrintRich($"[color=green]Successfully cleaned and split PDF.[/color] Saved to: [url={outputDirPath}]{outputDirPath}[/url]");
         }
     }
 }
+
