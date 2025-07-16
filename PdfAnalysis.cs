@@ -12,7 +12,7 @@ namespace PaperPilot
 {
     public static class PdfAnalysis
     {
-        public const string SPLIT_MARKER = "PAPER_PILOT_SPLIT";
+        public const string SPLIT_MARKER = "SPLIT_HERE";
 
         /// <summary>
         /// Analyzes a Godot ImageTexture to determine if the page is blank (mostly white).

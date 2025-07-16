@@ -13,10 +13,16 @@ namespace PaperPilot
     {
         public static void CleanAndSplitPdf(PaperStack paperStack)
         {
-            // 1. Clean the PDF by removing empty pages
+            // 1. Define pages to keep and splitting points
             var pagesToKeep = paperStack.Papers
-                .Where(p => p.State != PaperState.Empty)
+                .Where(p => p.State == PaperState.Keep)
                 .Select(p => p.PageId + 1) // DocLib uses 1-based page numbers
+                .OrderBy(p => p)
+                .ToList();
+
+            var originalSplittingPoints = paperStack.Papers
+                .Where(p => p.State == PaperState.SplittingPoint)
+                .Select(p => p.PageId + 1)
                 .OrderBy(p => p)
                 .ToList();
 
@@ -26,45 +32,56 @@ namespace PaperPilot
                 return;
             }
 
+            // 2. Create a cleaned PDF containing only the pages to keep
             string pageRange = string.Join(",", pagesToKeep);
             byte[] cleanedPdfBytes = DocLib.Instance.Split(paperStack.Path, pageRange);
 
-            // 2. Find splitting points in the cleaned PDF
-            var splittingPoints = paperStack.Papers
-                .Where(p => p.State == PaperState.SplittingPoint)
-                .Select(p => p.PageId + 1)
-                .OrderBy(p => p)
-                .ToList();
+            // 3. Calculate the new indices of the splitting points within the cleaned PDF
+            var newSplittingPoints = new List<int>();
+            foreach (var splitPoint in originalSplittingPoints)
+            {
+                // Find how many "keep" pages came before this split point.
+                // This count becomes the new index for the split.
+                int newIndex = pagesToKeep.Count(p => p < splitPoint);
+                if (newIndex > 0)
+                {
+                    newSplittingPoints.Add(newIndex);
+                }
+            }
 
-            // 3. Create output directory
+            // 4. Create output directory
             string outputFolder = ConfigManager.PilotConfig.OutputFolderPath;
             string originalFileName = Path.GetFileNameWithoutExtension(paperStack.Path);
             string outputDirName = $"{originalFileName}_{paperStack.Name}";
             string outputDirPath = Path.Combine(outputFolder, outputDirName);
             Directory.CreateDirectory(outputDirPath);
 
-            // 4. Split the cleaned PDF
+            // 5. Split the cleaned PDF based on the new splitting points
             int startPage = 1;
-            for (int i = 0; i < splittingPoints.Count; i++)
+            int fileCounter = 1;
+            var pagesInCleanedPdf = pagesToKeep.Count;
+
+            foreach (var endPage in newSplittingPoints)
             {
-                int endPage = splittingPoints[i];
+                if (startPage > endPage) continue;
+
                 string splitRange = $"{startPage}-{endPage}";
                 byte[] splitPdfBytes = DocLib.Instance.Split(cleanedPdfBytes, splitRange);
 
-                string outputFileName = $"{originalFileName}_{paperStack.Name}_{i + 1:D3}.pdf";
+                string outputFileName = $"{originalFileName}_{paperStack.Name}_{fileCounter++:D3}.pdf";
                 string outputPath = Path.Combine(outputDirPath, outputFileName);
                 File.WriteAllBytes(outputPath, splitPdfBytes);
 
                 startPage = endPage + 1;
             }
 
-            // 5. Save the last part of the PDF
-            if (startPage <= pagesToKeep.Count)
+            // 6. Save the last part of the PDF
+            if (startPage <= pagesInCleanedPdf)
             {
-                string splitRange = $"{startPage}-{pagesToKeep.Count}";
+                string splitRange = $"{startPage}-{pagesInCleanedPdf}";
                 byte[] splitPdfBytes = DocLib.Instance.Split(cleanedPdfBytes, splitRange);
 
-                string outputFileName = $"{originalFileName}_{paperStack.Name}_{splittingPoints.Count + 1:D3}.pdf";
+                string outputFileName = $"{originalFileName}_{paperStack.Name}_{fileCounter++:D3}.pdf";
                 string outputPath = Path.Combine(outputDirPath, outputFileName);
                 File.WriteAllBytes(outputPath, splitPdfBytes);
             }
