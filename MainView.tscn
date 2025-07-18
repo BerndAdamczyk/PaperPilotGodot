@@ -1,10 +1,11 @@
-[gd_scene load_steps=11 format=3 uid="uid://ps54qla22c0t"]
+[gd_scene load_steps=12 format=3 uid="uid://ps54qla22c0t"]
 
 [ext_resource type="PackedScene" uid="uid://ca8frta6anhcx" path="res://PaperGrid.tscn" id="1_8wuuv"]
 [ext_resource type="Theme" uid="uid://kgap1cf2dup7" path="res://theme.tres" id="1_axkxw"]
 [ext_resource type="Script" uid="uid://bmbygt3r7fhoh" path="res://Controller/PaperManager.cs" id="1_tha2q"]
 [ext_resource type="Script" uid="uid://baic3fqneeska" path="res://Editor/EditorConfigTool.cs" id="3_6bryr"]
 [ext_resource type="Texture2D" uid="uid://c527hbmydquhm" path="res://Assets/qr_code_outline_icon.svg" id="3_6d7y0"]
+[ext_resource type="Texture2D" uid="uid://5m7ryxc6gcle" path="res://Assets/settings_ic_icon.svg" id="3_dsjxm"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2x1y1"]
 bg_color = Color(0.6, 0.6, 0.6, 0)
@@ -52,6 +53,15 @@ layout_mode = 2
 
 [node name="HBoxContainer" type="HBoxContainer" parent="PaperManager/VBoxContainer/TopToolbar"]
 layout_mode = 2
+
+[node name="Settings" type="Button" parent="PaperManager/VBoxContainer/TopToolbar/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.05
+icon = ExtResource("3_dsjxm")
+flat = true
+icon_alignment = 1
+expand_icon = true
 
 [node name="GenerateQr" type="Button" parent="PaperManager/VBoxContainer/TopToolbar/HBoxContainer"]
 layout_mode = 2

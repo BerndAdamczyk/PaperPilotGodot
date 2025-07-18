@@ -26,6 +26,7 @@ namespace PaperPilot.Controller
 
         private PaperStateColorConfig _colorConfig;
         private FileSystemWatcher _fileWatcher;
+        private bool _isProcessing = false;
 
         //UI Elements
         private PaperStack _paperStack = new();
@@ -35,6 +36,7 @@ namespace PaperPilot.Controller
         private Button _btn_Skip = null;
         private Button _btn_Confirm = null;
         private Button _btn_GenerateQr = null;
+        private Button _btn_Settings = null;
         private Label _lbl_StEmpty = null;
         private Label _lbl_StSplitt = null;
         private Label _lbl_StKeep = null;
@@ -55,6 +57,7 @@ namespace PaperPilot.Controller
             _btn_Skip = this.GetComponentsInChildren<Button>("Skip").First();
             _btn_Confirm = this.GetComponentsInChildren<Button>("Confirm").First();
             _btn_GenerateQr = this.GetComponentsInChildren<Button>("GenerateQr").First();
+            _btn_Settings = this.GetComponentsInChildren<Button>("Settings").First();
             _lbl_StEmpty = this.GetComponentsInChildren<Label>("Empty").First();
             _lbl_StEmpty.LabelSettings = new();
             _lbl_StEmpty.LabelSettings.FontColor = _colorConfig.StateColors[PaperState.Empty];
@@ -72,6 +75,7 @@ namespace PaperPilot.Controller
             _btn_Skip.Pressed += _btn_Skip_Pressed;
             _btn_Confirm.Pressed += _btn_Confirm_Pressed;
             _btn_GenerateQr.Pressed += _btn_GenerateQr_Pressed;
+            _btn_Settings.Pressed += _btn_Settings_Pressed;
 
             SetButtonActiveState(_btn_Confirm, false);
             SetButtonActiveState(_btn_Skip, false);
@@ -84,6 +88,7 @@ namespace PaperPilot.Controller
             // Setup FileSystemWatcher
             SetupFileWatcher();
         }
+
 
         private void _btn_Confirm_Pressed()
         {
@@ -145,6 +150,10 @@ namespace PaperPilot.Controller
             AddChild(dialog);
             dialog.PopupCentered();
         }
+        private void _btn_Settings_Pressed()
+        {
+            ConfigManager.ShowConfigFolder();
+        }
 
         private void _spinBox_Columns_ValueChanged(double value)
         {
@@ -153,22 +162,30 @@ namespace PaperPilot.Controller
 
         private async void ProcessNextPDF()
         {
-            SetButtonActiveState(_btn_Confirm, false);
-            SetButtonActiveState(_btn_Skip, false);
-            _lbl_Status.Text = "Searching for PDF...";
-
-            string pdfPath = GetOldestPDF();
-
-            if (string.IsNullOrEmpty(pdfPath))
-            {
-                _lbl_Status.Text = "Waiting for new PDF in input folder...";
-                return;
-            }
-
-            _lbl_Status.Text = $"Processing: {Path.GetFileName(pdfPath)}";
+            if (_isProcessing) return;
+            _isProcessing = true;
 
             try
             {
+                SetButtonActiveState(_btn_Confirm, false);
+                SetButtonActiveState(_btn_Skip, false);
+                _lbl_Status.Text = "Searching for PDF...";
+
+                string pdfPath = GetOldestPDF();
+
+                if (string.IsNullOrEmpty(pdfPath))
+                {
+                    _lbl_Status.Text = "Waiting for new PDF in input folder...";
+                    return;
+                }
+
+                if (!await IsFileReady(pdfPath))
+                {
+                    _lbl_Status.Text = "Error: Could not access file.";
+                    return;
+                }
+
+                _lbl_Status.Text = $"Processing: {Path.GetFileName(pdfPath)}";
                 _paperStack = new PaperStack { Path = pdfPath };
                 _le_OutputFileName.Text = Path.GetFileNameWithoutExtension(pdfPath);
 
@@ -199,9 +216,37 @@ namespace PaperPilot.Controller
             }
             catch (Exception ex)
             {
-                GD.PrintErr($"RenderPdfPage failed: {ex.Message}");
+                GD.PrintErr($"ProcessNextPDF failed: {ex.Message}");
                 _lbl_Status.Text = "Error processing PDF.";
             }
+            finally
+            {
+                _isProcessing = false;
+            }
+        }
+
+        private async Task<bool> IsFileReady(string filePath)
+        {
+            const int maxRetries = 50;
+            const int delayMs = 500;
+
+            for (int i = 0; i < maxRetries; i++)
+            {
+                try
+                {
+                    using (var fs = new FileStream(filePath, FileMode.Open, System.IO.FileAccess.Read, FileShare.None))
+                    {
+                        return true; // File is accessible
+                    }
+                }
+                catch (IOException)
+                {
+                    GD.Print($"File is locked, retrying... Attempt {i + 1}/{maxRetries}");
+                    await Task.Delay(delayMs);
+                }
+            }
+            GD.PrintErr($"Could not access file after {maxRetries} attempts: {filePath}");
+            return false;
         }
 
         private string GetOldestPDF()
@@ -217,7 +262,9 @@ namespace PaperPilot.Controller
 
                 var pdfFiles = Directory.GetFiles(folder, "*.pdf", SearchOption.TopDirectoryOnly);
                 if (pdfFiles.Length == 0)
+                {
                     return null;
+                }
 
                 return pdfFiles.Select(f => new FileInfo(f)).OrderBy(f => f.CreationTime).First().FullName;
             }
@@ -276,7 +323,11 @@ namespace PaperPilot.Controller
         private void OnNewPdfCreated(object sender, FileSystemEventArgs e)
         {
             GD.Print($"New PDF detected: {e.Name}");
-            // The event is raised on a separate thread, so we need to call our Godot-related methods on the main thread.
+            if (_isProcessing)
+            {
+                GD.Print("Already processing a file, skipping trigger.");
+                return;
+            }
             CallDeferred(nameof(ProcessNextPDF));
         }
 
