@@ -1,16 +1,15 @@
-using Docnet.Core.Models;
 using Docnet.Core;
+using Docnet.Core.Models;
 using Godot;
+using PaperPilot.Config;
 using PaperPilot.Model;
+using PaperPilot.View;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using PaperPilot.Config;
-using PaperPilot.View;
 
 namespace PaperPilot.Controller
 {
@@ -22,13 +21,15 @@ namespace PaperPilot.Controller
         private int _paperPreviewHeight => (int)(_paperPreviewWidth * 1.414f);
 
         private const int _startColumnCount = 8;
+        private const string DefaultOutputFileName = "";
+        private const string DefaultPageCountText = "0";
 
         private PaperStateColorConfig _colorConfig;
+        private FileSystemWatcher _fileWatcher;
 
         //UI Elements
         private PaperStack _paperStack = new();
         private PaperGrid _paperGrid = null;
-        private GridContainer _GC_paperGrid = null;
         private SpinBox _spinBox_Columns = null;
         private LineEdit _le_OutputFileName = null;
         private Button _btn_Skip = null;
@@ -38,8 +39,9 @@ namespace PaperPilot.Controller
         private Label _lbl_StSplitt = null;
         private Label _lbl_StKeep = null;
         private Label _lbl_StTotal = null;
+        private Label _lbl_Status = null;
 
-        public override async void _Ready()
+        public override void _Ready()
         {
             base._Ready();
             ConfigManager.LoadAll();
@@ -63,6 +65,7 @@ namespace PaperPilot.Controller
             _lbl_StKeep.LabelSettings = new();
             _lbl_StKeep.LabelSettings.FontColor = _colorConfig.StateColors[PaperState.Keep];
             _lbl_StTotal = this.GetComponentsInChildren<Label>("Total").First();
+            _lbl_Status = this.GetComponentsInChildren<Label>("Status").First();
 
             _spinBox_Columns_ValueChanged(_startColumnCount);
             _spinBox_Columns.ValueChanged += _spinBox_Columns_ValueChanged;
@@ -70,22 +73,57 @@ namespace PaperPilot.Controller
             _btn_Confirm.Pressed += _btn_Confirm_Pressed;
             _btn_GenerateQr.Pressed += _btn_GenerateQr_Pressed;
 
-            await ProcessNextPDF();
+            SetButtonActiveState(_btn_Confirm, false);
+            SetButtonActiveState(_btn_Skip, false);
+
+            ResetUI();
+
+            // Initial check for PDF
+            ProcessNextPDF();
+            
+            // Setup FileSystemWatcher
+            SetupFileWatcher();
         }
 
-        private async void _btn_Confirm_Pressed()
+        private void _btn_Confirm_Pressed()
         {
             ExportPDF();
-            await ProcessNextPDF();
+            _paperGrid.ClearGrid();
+            try
+            {
+                File.Delete(_paperStack.Path);
+                GD.Print($"Deleted processed file: {_paperStack.Path}");
+            }
+            catch (Exception ex)
+            {
+                GD.PrintErr($"Error deleting file: {ex.Message}");
+            }
+
+            ResetUI();
+            ProcessNextPDF();
         }
+
         private void SetButtonActiveState(Button button, bool state)
         {
             button.Disabled = !state;
         }
 
-        private async void _btn_Skip_Pressed()
+        private void _btn_Skip_Pressed()
         {
-            await ProcessNextPDF();
+            _paperGrid.ClearGrid();
+            try
+            {
+                string skippedFolderPath = Path.Combine(Path.GetDirectoryName(_paperStack.Path), "skipped");
+                Directory.CreateDirectory(skippedFolderPath);
+                string destPath = Path.Combine(skippedFolderPath, Path.GetFileName(_paperStack.Path));
+                File.Move(_paperStack.Path, destPath);
+                GD.Print($"Skipped and moved file to: {destPath}");
+            }
+            catch (Exception ex)
+            {
+                GD.PrintErr($"Error skipping file: {ex.Message}");
+            }
+            ProcessNextPDF();
         }
 
         private void _btn_GenerateQr_Pressed()
@@ -113,16 +151,28 @@ namespace PaperPilot.Controller
             GridContainerColumnsChanged?.Invoke(Mathf.RoundToInt(value));
         }
 
-        private async Task ProcessNextPDF()
+        private async void ProcessNextPDF()
         {
             SetButtonActiveState(_btn_Confirm, false);
             SetButtonActiveState(_btn_Skip, false);
+            _lbl_Status.Text = "Searching for PDF...";
+
+            string pdfPath = GetOldestPDF();
+
+            if (string.IsNullOrEmpty(pdfPath))
+            {
+                _lbl_Status.Text = "Waiting for new PDF in input folder...";
+                return;
+            }
+
+            _lbl_Status.Text = $"Processing: {Path.GetFileName(pdfPath)}";
+
             try
             {
-                _paperStack = new();
-                _paperStack.Path = GetOldestPDF();
-                using (var docReader = DocLib.Instance
-                    .GetDocReader(_paperStack.Path, new PageDimensions(_paperPreviewWidth, _paperPreviewHeight)))
+                _paperStack = new PaperStack { Path = pdfPath };
+                _le_OutputFileName.Text = Path.GetFileNameWithoutExtension(pdfPath);
+
+                using (var docReader = DocLib.Instance.GetDocReader(_paperStack.Path, new PageDimensions(_paperPreviewWidth, _paperPreviewHeight)))
                 {
                     for (int i = 0; i < docReader.GetPageCount(); i++)
                     {
@@ -130,33 +180,30 @@ namespace PaperPilot.Controller
                         using (var pageReader = docReader.GetPageReader(i))
                         {
                             paper.PageId = i;
-                            paper.PagePreview = PdfTextureLoader.RenderPdfPage(pageReader, i, 
-                                _paperPreviewWidth, _paperPreviewHeight);
+                            paper.PagePreview = PdfTextureLoader.RenderPdfPage(pageReader, i, _paperPreviewWidth, _paperPreviewHeight);
                             if (PdfAnalysis.AnalyzeForSplit(paper.PagePreview))
                                 paper.State = PaperState.SplittingPoint;
                             else
-                                paper.State = PdfAnalysis.AnalyzeForBlank(paper.PagePreview)
-                                    ? PaperState.Empty
-                                    : PaperState.Keep;
+                                paper.State = PdfAnalysis.AnalyzeForBlank(paper.PagePreview) ? PaperState.Empty : PaperState.Keep;
                         }
                         _paperStack.Papers.Add(paper);
                         UpdatePaperStackCounts();
                         PageProcessed?.Invoke(paper);
-
-                        // Yield to Godot so UI can update/events can process
+                        
                         await ToSignal(GetTree(), "process_frame");
                     }
                 }
-
+                _lbl_Status.Text = "Processing complete.";
+                SetButtonActiveState(_btn_Confirm, true);
+                SetButtonActiveState(_btn_Skip, true);
             }
             catch (Exception ex)
             {
                 GD.PrintErr($"RenderPdfPage failed: {ex.Message}");
+                _lbl_Status.Text = "Error processing PDF.";
             }
-
-            SetButtonActiveState(_btn_Confirm, true);
-            SetButtonActiveState(_btn_Skip, true);
         }
+
         private string GetOldestPDF()
         {
             try
@@ -172,12 +219,7 @@ namespace PaperPilot.Controller
                 if (pdfFiles.Length == 0)
                     return null;
 
-                string oldest = pdfFiles
-                    .Select(f => new FileInfo(f))
-                    .OrderBy(f => f.CreationTime)
-                    .First().FullName;
-
-                return oldest;
+                return pdfFiles.Select(f => new FileInfo(f)).OrderBy(f => f.CreationTime).First().FullName;
             }
             catch (Exception ex)
             {
@@ -185,6 +227,7 @@ namespace PaperPilot.Controller
                 return null;
             }
         }
+
         private void ExportPDF()
         {
             _paperStack.Name = _le_OutputFileName.Text;
@@ -201,6 +244,46 @@ namespace PaperPilot.Controller
             _lbl_StEmpty.Text = _paperStack.EmptyPages.ToString();
             _lbl_StSplitt.Text = _paperStack.SplittingPointPages.ToString();
             _lbl_StTotal.Text = _paperStack.TotalPages.ToString();
+        }
+
+        private void ResetUI(string outputFileName = DefaultOutputFileName, 
+            string empty = DefaultPageCountText, 
+            string splitt = DefaultPageCountText, 
+            string keep = DefaultPageCountText, 
+            string total = DefaultPageCountText)
+        {
+            _le_OutputFileName.Text = outputFileName;
+            _lbl_StEmpty.Text = empty;
+            _lbl_StSplitt.Text = splitt;
+            _lbl_StKeep.Text = keep;
+            _lbl_StTotal.Text = total;
+        }
+        
+        private void SetupFileWatcher()
+        {
+            string folder = ConfigManager.PilotConfig.InputFolderPath;
+            if (!Directory.Exists(folder)) return;
+
+            _fileWatcher = new FileSystemWatcher(folder)
+            {
+                Filter = "*.pdf",
+                NotifyFilter = NotifyFilters.FileName,
+                EnableRaisingEvents = true
+            };
+            _fileWatcher.Created += OnNewPdfCreated;
+        }
+
+        private void OnNewPdfCreated(object sender, FileSystemEventArgs e)
+        {
+            GD.Print($"New PDF detected: {e.Name}");
+            // The event is raised on a separate thread, so we need to call our Godot-related methods on the main thread.
+            CallDeferred(nameof(ProcessNextPDF));
+        }
+
+        public override void _ExitTree()
+        {
+            base._ExitTree();
+            _fileWatcher?.Dispose();
         }
     }
 }

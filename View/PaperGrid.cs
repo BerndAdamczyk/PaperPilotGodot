@@ -41,6 +41,14 @@ namespace PaperPilot.View
 
             _buttons.Add(paperButton);
         }
+        public void ClearGrid()
+        {
+            foreach (var button in _buttons)
+            {
+                button.QueueFree();
+            }
+            _buttons.Clear();
+        }
         private void ChangeColumns(int columns)
         {
             this.Columns = columns;

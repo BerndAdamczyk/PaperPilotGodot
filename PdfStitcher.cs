@@ -68,7 +68,7 @@ namespace PaperPilot
                 string splitRange = $"{startPage}-{endPage}";
                 byte[] splitPdfBytes = DocLib.Instance.Split(cleanedPdfBytes, splitRange);
 
-                string outputFileName = $"{paperStack.Name}_{originalFileName}_{fileCounter++:D3}.pdf";
+                string outputFileName = $"{paperStack.Name}_{fileCounter++:D3}.pdf";
                 string outputPath = Path.Combine(outputFolder, outputFileName);
                 File.WriteAllBytes(outputPath, splitPdfBytes);
 
@@ -81,7 +81,7 @@ namespace PaperPilot
                 string splitRange = $"{startPage}-{pagesInCleanedPdf}";
                 byte[] splitPdfBytes = DocLib.Instance.Split(cleanedPdfBytes, splitRange);
 
-                string outputFileName = $"{originalFileName}_{paperStack.Name}_{fileCounter++:D3}.pdf";
+                string outputFileName = $"{paperStack.Name}_{fileCounter++:D3}.pdf";
                 string outputPath = Path.Combine(outputFolder, outputFileName);
                 File.WriteAllBytes(outputPath, splitPdfBytes);
             }
