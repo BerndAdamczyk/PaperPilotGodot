@@ -4,6 +4,7 @@ using Godot;
 using PaperPilot.Model;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -19,6 +20,8 @@ namespace PaperPilot.Controller
         public Action<int> GridContainerColumnsChanged { get; set; }
         private int _paperPreviewWidth { get; set; } = 800;
         private int _paperPreviewHeight => (int)(_paperPreviewWidth * 1.414f);
+
+        private const int _startColumnCount = 8;
 
         private PaperStateColorConfig _colorConfig;
 
@@ -61,6 +64,7 @@ namespace PaperPilot.Controller
             _lbl_StKeep.LabelSettings.FontColor = _colorConfig.StateColors[PaperState.Keep];
             _lbl_StTotal = this.GetComponentsInChildren<Label>("Total").First();
 
+            _spinBox_Columns_ValueChanged(_startColumnCount);
             _spinBox_Columns.ValueChanged += _spinBox_Columns_ValueChanged;
             _btn_Skip.Pressed += _btn_Skip_Pressed;
             _btn_Confirm.Pressed += _btn_Confirm_Pressed;
@@ -74,7 +78,10 @@ namespace PaperPilot.Controller
             ExportPDF();
             await ProcessNextPDF();
         }
-
+        private void SetButtonActiveState(Button button, bool state)
+        {
+            button.Disabled = !state;
+        }
 
         private async void _btn_Skip_Pressed()
         {
@@ -93,7 +100,9 @@ namespace PaperPilot.Controller
             dialog.FileSelected += (path) =>
             {
                 Tools.QrCodeGenerator.GenerateSplitMarkerPdf(path);
-                GD.Print($"QR Code PDF generated successfully at: {path}");
+                var absolutePath = ProjectSettings.GlobalizePath(path).Replace("/", "\\");
+                GD.Print($"QR Code PDF generated successfully at: {absolutePath}");
+                Process.Start("explorer.exe", $"/select, \"{absolutePath}\"");
             };
             AddChild(dialog);
             dialog.PopupCentered();
@@ -106,6 +115,8 @@ namespace PaperPilot.Controller
 
         private async Task ProcessNextPDF()
         {
+            SetButtonActiveState(_btn_Confirm, false);
+            SetButtonActiveState(_btn_Skip, false);
             try
             {
                 _paperStack = new();
@@ -142,6 +153,9 @@ namespace PaperPilot.Controller
             {
                 GD.PrintErr($"RenderPdfPage failed: {ex.Message}");
             }
+
+            SetButtonActiveState(_btn_Confirm, true);
+            SetButtonActiveState(_btn_Skip, true);
         }
         private string GetOldestPDF()
         {

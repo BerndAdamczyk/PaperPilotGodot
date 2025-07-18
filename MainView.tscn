@@ -52,6 +52,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.05
 icon = ExtResource("3_6d7y0")
+flat = true
 icon_alignment = 1
 expand_icon = true
 
@@ -71,8 +72,8 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.08
 min_value = 1.0
-max_value = 10.0
-value = 4.0
+max_value = 20.0
+value = 8.0
 rounded = true
 alignment = 1
 
@@ -121,12 +122,14 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_styles/normal = SubResource("StyleBoxFlat_6d7y0")
+disabled = true
 text = "Skip"
 
 [node name="Confirm" type="Button" parent="PaperManager/VBoxContainer/BottomToolbar/VBoxContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_styles/normal = SubResource("StyleBoxFlat_dsjxm")
+disabled = true
 text = "Confirm"
 
 [node name="EditorConfigTool" type="Node" parent="."]
