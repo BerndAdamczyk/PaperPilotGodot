@@ -52,9 +52,9 @@ namespace PaperPilot
             // 4. Create output directory
             string outputFolder = ConfigManager.PilotConfig.OutputFolderPath;
             string originalFileName = Path.GetFileNameWithoutExtension(paperStack.Path);
-            string outputDirName = $"{originalFileName}_{paperStack.Name}";
-            string outputDirPath = Path.Combine(outputFolder, outputDirName);
-            Directory.CreateDirectory(outputDirPath);
+            //string outputDirName = $"{paperStack.Name}_{originalFileName}";
+            //string outputDirPath = Path.Combine(outputFolder, outputDirName);
+            Directory.CreateDirectory(outputFolder);
 
             // 5. Split the cleaned PDF based on the new splitting points
             int startPage = 1;
@@ -68,8 +68,8 @@ namespace PaperPilot
                 string splitRange = $"{startPage}-{endPage}";
                 byte[] splitPdfBytes = DocLib.Instance.Split(cleanedPdfBytes, splitRange);
 
-                string outputFileName = $"{originalFileName}_{paperStack.Name}_{fileCounter++:D3}.pdf";
-                string outputPath = Path.Combine(outputDirPath, outputFileName);
+                string outputFileName = $"{paperStack.Name}_{originalFileName}_{fileCounter++:D3}.pdf";
+                string outputPath = Path.Combine(outputFolder, outputFileName);
                 File.WriteAllBytes(outputPath, splitPdfBytes);
 
                 startPage = endPage + 1;
@@ -82,11 +82,11 @@ namespace PaperPilot
                 byte[] splitPdfBytes = DocLib.Instance.Split(cleanedPdfBytes, splitRange);
 
                 string outputFileName = $"{originalFileName}_{paperStack.Name}_{fileCounter++:D3}.pdf";
-                string outputPath = Path.Combine(outputDirPath, outputFileName);
+                string outputPath = Path.Combine(outputFolder, outputFileName);
                 File.WriteAllBytes(outputPath, splitPdfBytes);
             }
 
-            GD.PrintRich($"[color=green]Successfully cleaned and split PDF.[/color] Saved to: [url={outputDirPath}]{outputDirPath}[/url]");
+            GD.PrintRich($"[color=green]Successfully cleaned and split PDF.[/color] Saved to: [url={outputFolder}]{outputFolder}[/url]");
         }
     }
 }
