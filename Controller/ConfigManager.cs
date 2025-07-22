@@ -21,6 +21,11 @@ namespace PaperPilot.Controller
         public static void LoadAll()
         {
             PilotConfig = Load<PaperPilotConfig>(PilotConfigFile) ?? new PaperPilotConfig();
+            if(PilotConfig != null)
+            {
+                Directory.CreateDirectory(PilotConfig.AbsoluteInputFolderPath);
+                Directory.CreateDirectory(PilotConfig.AbsoluteOutputFolderPath);
+            }
             StateColorConfig = LoadPaperStateColorConfig(StateColorConfigFile) ?? new PaperStateColorConfig();
         }
 

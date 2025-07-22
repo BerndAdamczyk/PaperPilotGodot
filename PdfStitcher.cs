@@ -50,7 +50,7 @@ namespace PaperPilot
             }
 
             // 4. Create output directory
-            string outputFolder = ConfigManager.PilotConfig.OutputFolderPath;
+            string outputFolder = ConfigManager.PilotConfig.AbsoluteOutputFolderPath;
             string originalFileName = Path.GetFileNameWithoutExtension(paperStack.Path);
             //string outputDirName = $"{paperStack.Name}_{originalFileName}";
             //string outputDirPath = Path.Combine(outputFolder, outputDirName);

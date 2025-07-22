@@ -253,7 +253,7 @@ namespace PaperPilot.Controller
         {
             try
             {
-                string folder = ConfigManager.PilotConfig.InputFolderPath;
+                string folder = ConfigManager.PilotConfig.AbsoluteInputFolderPath;
                 if (!Directory.Exists(folder))
                 {
                     GD.PrintErr($"Input folder does not exist: {folder}");
@@ -308,7 +308,7 @@ namespace PaperPilot.Controller
         
         private void SetupFileWatcher()
         {
-            string folder = ConfigManager.PilotConfig.InputFolderPath;
+            string folder = ConfigManager.PilotConfig.AbsoluteInputFolderPath;
             if (!Directory.Exists(folder)) return;
 
             _fileWatcher = new FileSystemWatcher(folder)
