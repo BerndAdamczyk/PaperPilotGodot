@@ -159,8 +159,8 @@ text = "Confirm"
 
 [node name="EditorConfigTool" type="Node" parent="."]
 script = ExtResource("3_6bryr")
-InputFolder = "res://input"
-OutputFolder = "res://output"
+InputFolder = "Z:/Bernds_Festplatte/Documents/_Scan/scanner"
+OutputFolder = "Z:/Bernds_Festplatte/_Proxmox/volume1/docker/paperless-ngx/consume"
 BlankPageThreshold = 0.01
 NotAnalyzedColor = Color(0.427493, 0.427493, 0.427493, 1)
 KeepColor = Color(4.87324e-07, 0.342791, 4.33177e-07, 1)

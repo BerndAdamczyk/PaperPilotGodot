@@ -27,6 +27,7 @@ namespace PaperPilot.Controller
         private PaperStateColorConfig _colorConfig;
         private FileSystemWatcher _fileWatcher;
         private bool _isProcessing = false;
+        private Godot.Timer _debounceTimer;
 
         //UI Elements
         private PaperStack _paperStack = new();
@@ -81,6 +82,7 @@ namespace PaperPilot.Controller
             SetButtonActiveState(_btn_Skip, false);
 
             ResetUI();
+            SetupDebounceTimer();
 
             // Initial check for PDF
             ProcessNextPDF();
@@ -305,27 +307,56 @@ namespace PaperPilot.Controller
             _lbl_StKeep.Text = keep;
             _lbl_StTotal.Text = total;
         }
+
+        private void SetupDebounceTimer()
+        {
+            _debounceTimer = new Godot.Timer
+            {
+                WaitTime = 1.0, // Wait 1 second
+                OneShot = true
+            };
+            AddChild(_debounceTimer);
+            _debounceTimer.Timeout += OnDebounceTimerTimeout;
+        }
         
         private void SetupFileWatcher()
         {
             string folder = ConfigManager.PilotConfig.AbsoluteInputFolderPath;
-            if (!Directory.Exists(folder)) return;
+            if (!Directory.Exists(folder)) 
+            {
+                GD.PrintErr($"File watcher setup failed: Input folder not found at '{folder}'");
+                return;
+            }
 
             _fileWatcher = new FileSystemWatcher(folder)
             {
                 Filter = "*.pdf",
-                NotifyFilter = NotifyFilters.FileName,
-                EnableRaisingEvents = true
+                NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite,
+                EnableRaisingEvents = true,
+                InternalBufferSize = 8192 // 8 KB buffer
             };
-            _fileWatcher.Created += OnNewPdfCreated;
+            _fileWatcher.Created += OnPdfEvent;
+            _fileWatcher.Error += OnPdfEvent; // Treat error as a trigger
         }
 
-        private void OnNewPdfCreated(object sender, FileSystemEventArgs e)
+        private void OnPdfEvent(object sender, FileSystemEventArgs e)
         {
-            GD.Print($"New PDF detected: {e.Name}");
-            if (_isProcessing)
+            GD.Print($"PDF event detected: {e.Name}. Starting debounce timer.");
+            _debounceTimer.CallDeferred("start");
+        }
+
+        private void OnPdfEvent(object sender, ErrorEventArgs e)
+        {
+            GD.PrintErr($"FileSystemWatcher Error, but treating as a trigger: {e.GetException().Message}");
+            _debounceTimer.CallDeferred("start");
+        }
+
+        private void OnDebounceTimerTimeout()
+        {
+            GD.Print("Debounce timer finished. Checking for new PDF.");
+            if (_isProcessing || _btn_Confirm.Disabled == false)
             {
-                GD.Print("Already processing a file, skipping trigger.");
+                GD.Print("Already processing a file or waiting for confirmation, skipping trigger.");
                 return;
             }
             CallDeferred(nameof(ProcessNextPDF));
@@ -335,6 +366,7 @@ namespace PaperPilot.Controller
         {
             base._ExitTree();
             _fileWatcher?.Dispose();
+            _debounceTimer?.Stop();
         }
     }
 }
