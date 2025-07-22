@@ -8,49 +8,75 @@ using System.Collections.Generic;
 public partial class EditorConfigTool : Node
 {
     [Export(PropertyHint.Dir)]
-    public string InputFolder { get; set; } = "input";
+    public string InputFolder { get; set; }
     [Export(PropertyHint.Dir)]
-    public string OutputFolder { get; set; } = "output";
+    public string OutputFolder { get; set; }
 
     [Export]
-    public double BlankPageThreshold { get; set; } = 0.1;
+    public double BlankPageThreshold { get; set; }
 
-    // Example: Color exports for 4 paper states
     [Export]
-    public Color NotAnalyzedColor { get; set; } = Colors.Gray;
+    public Color NotAnalyzedColor { get; set; }
     [Export]
-    public Color KeepColor { get; set; } = Colors.Green;
+    public Color KeepColor { get; set; }
     [Export]
-    public Color EmptyColor { get; set; } = Colors.Red;
+    public Color EmptyColor { get; set; }
     [Export]
-    public Color SplittingPointColor { get; set; } = Colors.Purple;
+    public Color SplittingPointColor { get; set; }
 
     [ExportToolButton("Save Config")]
     public Callable SaveConfigButton => Callable.From(SaveConfig);
+    
+    [ExportToolButton("Load Config")]
+    public Callable LoadConfigButton => Callable.From(LoadConfigValues);
+
+    public override void _Ready()
+    {
+        base._Ready();
+        if (Engine.IsEditorHint())
+        {
+            ConfigManager.LoadAll();
+            LoadConfigValues();
+        }
+    }
+
+    public void LoadConfigValues()
+    {
+        if (!Engine.IsEditorHint()) return;
+
+        GD.Print("[EditorConfigTool] Loading config values into editor.");
+        ConfigManager.LoadAll();
+
+        InputFolder = ConfigManager.PilotConfig.InputFolderPath;
+        OutputFolder = ConfigManager.PilotConfig.OutputFolderPath;
+        BlankPageThreshold = ConfigManager.PilotConfig.BlankPageThreshold;
+
+        var stateColors = ConfigManager.StateColorConfig.StateColors;
+        NotAnalyzedColor = stateColors.GetValueOrDefault(PaperState.NotAnalyzed, new PaperStateColorConfig().StateColors[PaperState.NotAnalyzed]);
+        KeepColor = stateColors.GetValueOrDefault(PaperState.Keep, new PaperStateColorConfig().StateColors[PaperState.Keep]);
+        EmptyColor = stateColors.GetValueOrDefault(PaperState.Empty, new PaperStateColorConfig().StateColors[PaperState.Empty]);
+        SplittingPointColor = stateColors.GetValueOrDefault(PaperState.SplittingPoint, new PaperStateColorConfig().StateColors[PaperState.SplittingPoint]);
+    }
 
     public void SaveConfig()
     {
-        if (Engine.IsEditorHint())
-        {
-            // Set config values
-            ConfigManager.PilotConfig ??= new PaperPilotConfig();
-            ConfigManager.PilotConfig.InputFolderPath = ProjectSettings.GlobalizePath(InputFolder);
-            ConfigManager.PilotConfig.OutputFolderPath = ProjectSettings.GlobalizePath(OutputFolder);
-            ConfigManager.PilotConfig.BlankPageThreshold = BlankPageThreshold;
+        if (!Engine.IsEditorHint()) return;
 
-            // Set colors
-            ConfigManager.StateColorConfig ??= new PaperStateColorConfig();
-            var stateColors = ConfigManager.StateColorConfig.StateColors;
-            stateColors[PaperState.NotAnalyzed] = NotAnalyzedColor;
-            stateColors[PaperState.Keep] = KeepColor;
-            stateColors[PaperState.Empty] = EmptyColor;
-            stateColors[PaperState.SplittingPoint] = SplittingPointColor;
+        ConfigManager.PilotConfig ??= new PaperPilotConfig();
+        ConfigManager.PilotConfig.InputFolderPath = InputFolder;
+        ConfigManager.PilotConfig.OutputFolderPath = OutputFolder;
+        ConfigManager.PilotConfig.BlankPageThreshold = BlankPageThreshold;
 
-            ConfigManager.SaveAll();
+        ConfigManager.StateColorConfig ??= new PaperStateColorConfig();
+        var stateColors = ConfigManager.StateColorConfig.StateColors;
+        stateColors[PaperState.NotAnalyzed] = NotAnalyzedColor;
+        stateColors[PaperState.Keep] = KeepColor;
+        stateColors[PaperState.Empty] = EmptyColor;
+        stateColors[PaperState.SplittingPoint] = SplittingPointColor;
 
-            GD.Print("[ConfigEditorTool] Default config saved to user://");
-             //Optionally: open the config folder
-            ConfigManager.ShowConfigFolder();
-        }
+        ConfigManager.SaveAll();
+
+        GD.Print("[EditorConfigTool] Config saved to user://");
+        ConfigManager.ShowConfigFolder();
     }
 }

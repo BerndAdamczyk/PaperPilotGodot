@@ -20,13 +20,32 @@ namespace PaperPilot.Controller
 
         public static void LoadAll()
         {
+            bool pilotConfigExisted = File.Exists(PilotConfigFile);
+            bool stateColorConfigExisted = File.Exists(StateColorConfigFile);
+
             PilotConfig = Load<PaperPilotConfig>(PilotConfigFile) ?? new PaperPilotConfig();
-            if(PilotConfig != null)
-            {
-                Directory.CreateDirectory(PilotConfig.AbsoluteInputFolderPath);
-                Directory.CreateDirectory(PilotConfig.AbsoluteOutputFolderPath);
-            }
             StateColorConfig = LoadPaperStateColorConfig(StateColorConfigFile) ?? new PaperStateColorConfig();
+
+            if (!pilotConfigExisted || !stateColorConfigExisted)
+            {
+                SaveAll();
+                GD.Print("Default config files created at: ", UserConfigDir);
+            }
+            
+            // Create directories if they are not in res:// and path is not null
+            string resPath = ProjectSettings.GlobalizePath("res://");
+
+            string absInput = PilotConfig.AbsoluteInputFolderPath;
+            if (!string.IsNullOrEmpty(absInput) && !absInput.StartsWith(resPath, StringComparison.OrdinalIgnoreCase))
+            {
+                Directory.CreateDirectory(absInput);
+            }
+
+            string absOutput = PilotConfig.AbsoluteOutputFolderPath;
+            if (!string.IsNullOrEmpty(absOutput) && !absOutput.StartsWith(resPath, StringComparison.OrdinalIgnoreCase))
+            {
+                Directory.CreateDirectory(absOutput);
+            }
         }
 
         public static void SaveAll()

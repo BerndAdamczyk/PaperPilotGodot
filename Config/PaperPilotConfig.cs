@@ -21,7 +21,7 @@ namespace PaperPilot.Config
         {
             InputFolderPath = "input";
             OutputFolderPath = "output";
-            BlankPageThreshold = 0.95;
+            BlankPageThreshold = 0.01;
         }
 
         private string GetAbsolutePath(string path)
@@ -29,6 +29,11 @@ namespace PaperPilot.Config
             if (string.IsNullOrEmpty(path))
             {
                 return null;
+            }
+
+            if (path.StartsWith("res://") || path.StartsWith("user://"))
+            {
+                return ProjectSettings.GlobalizePath(path);
             }
             
             if (Path.IsPathRooted(path))
