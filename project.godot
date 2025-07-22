@@ -25,7 +25,7 @@ _________________________________________________________________________
 7) Insert the name for the paper stack (physical folder). This will be the output file names with an index at the end.
 8) After verification the PDF will be exported into a output folder as multiple PDF files.
 9) PaperPilot deletes imported PDF from input folder and starts at point 5 with the new oldest PDF."
-config/version="0.1.0"
+config/version="0.1.1"
 run/main_scene="uid://ps54qla22c0t"
 config/features=PackedStringArray("4.4", "C#", "Mobile")
 boot_splash/show_image=false
