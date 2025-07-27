@@ -10,6 +10,8 @@ anchor_right = 0.95
 anchor_bottom = 0.95
 grow_horizontal = 2
 grow_vertical = 2
+follow_focus = true
+draw_focus_border = true
 horizontal_scroll_mode = 0
 
 [node name="GridContainer" type="GridContainer" parent="."]
