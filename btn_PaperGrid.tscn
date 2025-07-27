@@ -41,3 +41,8 @@ theme = ExtResource("1_ri6rt")
 texture = ExtResource("1_fggxr")
 expand_mode = 5
 stretch_mode = 5
+
+[node name="Button" type="Button" parent="."]
+show_behind_parent = true
+layout_mode = 2
+theme = ExtResource("1_ri6rt")
