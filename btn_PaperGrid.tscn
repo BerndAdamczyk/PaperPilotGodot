@@ -1,10 +1,22 @@
-[gd_scene load_steps=4 format=3 uid="uid://c2i4k8yp3vd8h"]
+[gd_scene load_steps=7 format=3 uid="uid://c2i4k8yp3vd8h"]
 
 [ext_resource type="Script" uid="uid://deqb6mxswhoif" path="res://View/PaperButton.cs" id="1_ahlix"]
 [ext_resource type="Texture2D" uid="uid://c6f6bd83s6oq2" path="res://Test-PDF png/Test-PDF-6.png" id="1_fggxr"]
 [ext_resource type="Theme" uid="uid://kgap1cf2dup7" path="res://theme.tres" id="1_ri6rt"]
+[ext_resource type="Texture2D" uid="uid://4j67eanxrn3o" path="res://Assets/rotate-option-svgrepo-com_white.svg" id="3_ahlix"]
+
+[sub_resource type="InputEventKey" id="InputEventKey_ahlix"]
+device = -1
+pressed = true
+keycode = 82
+unicode = 114
+
+[sub_resource type="Shortcut" id="Shortcut_uehug"]
+events = [SubResource("InputEventKey_ahlix")]
 
 [node name="PanelContainer" type="PanelContainer"]
+offset_right = 128.0
+offset_bottom = 198.168
 size_flags_horizontal = 3
 size_flags_vertical = 3
 focus_mode = 2
@@ -25,9 +37,29 @@ offset_bottom = -5.0
 grow_horizontal = 2
 grow_vertical = 0
 theme = ExtResource("1_ri6rt")
-text = "1awda wdawd awd awd "
+text = "100"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="btn_Rotate" type="Button" parent="Panel/Label"]
+visible = false
+show_behind_parent = true
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.075
+anchor_top = 0.5
+anchor_right = 0.931
+anchor_bottom = 0.5
+offset_top = -10.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_ri6rt")
+shortcut = SubResource("Shortcut_uehug")
+icon = ExtResource("3_ahlix")
+flat = true
+icon_alignment = 2
+expand_icon = true
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 2
@@ -42,7 +74,7 @@ texture = ExtResource("1_fggxr")
 expand_mode = 5
 stretch_mode = 5
 
-[node name="Button" type="Button" parent="."]
+[node name="btn_Paper" type="Button" parent="."]
 show_behind_parent = true
 layout_mode = 2
 theme = ExtResource("1_ri6rt")

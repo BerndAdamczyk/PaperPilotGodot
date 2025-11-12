@@ -21,6 +21,7 @@ namespace PaperPilot.View
         private Panel _panel = null;
 
         private Button _btn_Paper = null;
+        private Button _btn_Rotate = null;
 
         public void Setup(PaperManager paperManager, Paper paper)
         {
@@ -28,8 +29,11 @@ namespace PaperPilot.View
             _paper = paper;
             _colorConfig = ConfigManager.StateColorConfig;
 
-            _btn_Paper = this.GetComponentsInChildren<Button>().First();
+            _btn_Paper = this.GetComponentsInChildren<Button>("btn_Paper").First();
             _btn_Paper.Pressed += _btn_Paper_Pressed;
+
+            _btn_Rotate = this.GetComponentsInChildren<Button>("btn_Rotate").First();
+            //_btn_Rotate.Pressed += _btn_Rotate_Pressed;
 
             string absolutePath =
                 ProjectSettings.GlobalizePath("res://Test-PDF.pdf");
@@ -59,6 +63,11 @@ namespace PaperPilot.View
 
             _paper.State = (PaperState) ((((int)_paper.State) + 1) % 2);
             SetPanelColor(_panel, _colorConfig.StateColors[_paper.State]);
+        }
+
+        private void _btn_Rotate_Pressed()
+        {
+            throw new NotImplementedException();
         }
     }
 }
